@@ -1,4 +1,2 @@
 test line xx
-x
-x
-x
+-n x
