@@ -1,3 +1,4 @@
 test line xx
 -n x
 yx
+yx
