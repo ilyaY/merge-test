@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "moduleResolution": "node",
+    "module": "amd",
+    "baseUrl": ".",
+    "rootDir": "./",
+    "isolatedModules": true,
+    "noImplicitUseStrict": true,
+    "experimentalDecorators": true,
+    "downlevelIteration": true,
+    "noEmitOnError": false,
+    "typeRoots": [
+      "./dx"
+    ]
+  },
+  "include": [
+    "./**/*.ts"
+  ]
+}
