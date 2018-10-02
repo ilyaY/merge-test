@@ -35,6 +35,9 @@ declare namespace CoBlocks {
             visible: boolean;
         };
     };
+    const runtime: {
+        listen(listeners: __RuntimeListeners): Disposable;
+    };
     interface __ItemProps {
         placeholder?: any;
         min?: number;
@@ -115,18 +118,22 @@ declare namespace Ellipsoid {
 declare namespace Capsule {
     function create(xPos: number, yPos: number, zPos: number): Capsule;
 }
-declare namespace Physics {
-    function motorJoint(b1: BaseItem, b2: BaseItem, v: BaseItem): MotorJointConstraint;
-    function hingeJoint(b1: BaseItem, b2: BaseItem, v: BaseItem): HingeJointConstraint;
+declare namespace Application {
+    type ViewMode = 'default' | 'gyro' | 'vr' | 'ar' | 'stereo';
 }
-interface Marker {
+interface Marker extends __PositionService {
     useForCamera: boolean;
-    readonly transform: __PositionService;
     readonly tracked: boolean;
     onPositionChanged(handler: ((() => void))): void;
     onTrackingStateChanged(handler: (((arg0: boolean) => void))): void;
     attachToItem(item: BaseItem): void;
     itemsAlwaysVisible: boolean;
+}
+declare namespace AR {
+    type MergeCubeSide = 'right' | 'left' | 'front' | 'back' | 'top' | 'bottom';
+}
+declare namespace AR {
+    type RotationDirection = 'up' | 'down' | 'left' | 'right';
 }
 declare namespace CoBlocks {
     type __SuspendAction = (((continuation: ((() => void))) => void));
@@ -165,6 +172,15 @@ declare namespace CoBlocks {
         readonly effectivelyVisible: boolean;
     }
 }
+declare namespace Camera {
+    interface Projection {
+        readonly mode: Camera.ProjectionMode;
+        readonly size: number;
+    }
+}
+declare namespace Camera {
+    type ProjectionMode = 'perspective' | 'orthographic';
+}
 interface Joystick {
     readonly position: Vector2;
     onButtonChanged(handler: ((() => void))): void;
@@ -186,11 +202,85 @@ interface PathTail {
     removeLast(): void;
     removeAll(): void;
 }
+declare let AR: AR;
+declare let Sound: __Sound;
+declare let Web: __Web;
+declare let Debug: __Debug;
+declare let Settings: __Settings;
+declare let Renderer: __Renderer;
+declare let Environment: __Environment;
+declare let ML: __ML;
+declare let Input: __Input;
+declare let RayCast: __RayCast;
+declare let Application: __Application;
+declare let Analytics: __Analytics;
+declare let Multiplayer: __Multiplayer;
+declare let GUI: __GUI;
+declare let Physics: __Physics;
 declare let Scene: __SceneService;
 declare let Space: Space;
-declare let Activity: __ActivityService;
+declare let Activity: __Activity;
 declare let IDE: __IdeService;
 declare let Assistant: Assistant;
+declare let Time: __Time;
+declare namespace CoBlocks {
+    interface __RuntimeListeners {
+        readonly blockStarted?: (((fiberId: number, index: number) => void));
+        readonly blockEnded?: (((fiberId: number, index: number) => void));
+        readonly fiberStopped?: (((fiberId: number) => void));
+        readonly fiberSuspended?: (((fiberId: number) => void));
+    }
+}
+interface Camera extends __PositionService {
+    focusedItem: CameraItem;
+    isVisible(item: BaseItem): boolean;
+    getDirection(): Vector3;
+    readonly direction: Vector3;
+    setCameraVerticalLimits(min: number, max: number): void;
+    setFocusCameraMaxDistance(d: number): void;
+    setFocusCameraMoveToCameraDirection(b: boolean): void;
+    setFocusCameraUpdateModelFromCamera(b: boolean): void;
+    setFocusCameraUpdateCameraFromModel(b: boolean): void;
+    setFocusCameraBodyTransformBlock(b: boolean): void;
+    setFocusCameraTargetToCOM(b: boolean): void;
+    setCameraCollisionMode(b: boolean): void;
+    setJumpVelocity(v: number): void;
+    setGravity(g: number): void;
+    setCollideWithPhysics(b: boolean): void;
+    addToCollisionFilter(item: BaseItem): void;
+    removeFromCollisionFilter(item: BaseItem): void;
+    setSlopeAngle(angle: number): void;
+    setStayAngle(angle: number): void;
+    setCollisionCapsuleHeight(height: number): void;
+    setCollisionCapsuleRadius(radius: number): void;
+    setMovementSpeed(speed: number): void;
+    lockMousePointer(en: boolean): void;
+    enableAim(en: boolean): void;
+    setAimColor(color: string): void;
+    setFov(fov: number): void;
+    projection: Camera.Projection;
+}
+interface IVector3 {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+}
+interface Vector3Blockly extends IVector3 {
+    readonly isGlobal: boolean;
+}
+declare namespace Multiplayer {
+    interface Player {
+        readonly id: string;
+        readonly userName: string;
+        readonly latency: number;
+        readonly jitter: number;
+        readonly email: string;
+        readonly index: number;
+        readonly team: number;
+        readonly isHost: boolean;
+        sendMessage(message: string): void;
+    }
+}
 interface Constraint extends Disposable {
     tuneFreqDumpMass(f: number, d: number, m: number): void;
     setMaxForce(f: number): void;
@@ -273,80 +363,56 @@ interface RotationConstraint extends Constraint {
 }
 interface SliderConstraint extends Constraint {
 }
-interface Camera extends __PositionService {
-    readonly focusedItem: AnimatedItem;
-    getDirection(): Vector3;
-    readonly direction: Vector3;
-    setCameraVerticalLimits(min: number, max: number): void;
-    setFocusCameraMaxDistance(d: number): void;
-    setFocusCameraMoveToCameraDirection(b: boolean): void;
-    setFocusCameraUpdateModelFromCamera(b: boolean): void;
-    setFocusCameraUpdateCameraFromModel(b: boolean): void;
-    setFocusCameraBodyTransformBlock(b: boolean): void;
-    setFocusCameraTargetToCOM(b: boolean): void;
-    setCameraCollisionMode(b: boolean): void;
-    setJumpVelocity(v: number): void;
-    setGravity(g: number): void;
-    setCollideWithPhysics(b: boolean): void;
-    addToCollisionFilter(item: BaseItem): void;
-    removeFromCollisionFilter(item: BaseItem): void;
-    setSlopeAngle(angle: number): void;
-    setStayAngle(angle: number): void;
-    setCollisionCapsuleHeight(height: number): void;
-    setCollisionCapsuleRadius(radius: number): void;
-    setMovementSpeed(speed: number): void;
-    lockMousePointer(en: boolean): void;
-    enableAim(en: boolean): void;
-    setAimColor(color: string): void;
-    setFov(fov: number): void;
+declare namespace Activity {
+    interface __BuildMode {
+        setInfoScenes(indexes: Array<number>): void;
+        resetCompletedScenes(): void;
+    }
 }
-interface IVector3 {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-}
-interface Vector3Blockly extends IVector3 {
-    readonly isGlobal: boolean;
-}
-interface __ActivityService {
-    showCodeEditor(show: boolean): void;
-    showCodeEditorButton(show: boolean): void;
-    showCodeEditorWindowState(show: boolean): void;
-    showCoBlocksEditor(show: boolean): void;
-    setProgressBarVisible(value: boolean, onPhone: boolean): void;
-    setProgressBarButtonURL(value: string): void;
-    setProgressBarInteractive(value: boolean): void;
-    showCoSpacesLogo(value: boolean): void;
-    setInfoScenes(indexes: Array<number>): void;
-    setMarkerBasedAR(value: boolean): void;
-    setSceneCompleted(index: number): void;
-    resetCompletedScenes(): void;
+interface __Activity {
+    readonly BuildMode: Activity.__BuildMode;
+    completeScene(index: number): void;
     setTaskText(text: string): void;
     setTaskImage(imageId: string): void;
-    setToolbarColor(r: number, g: number, b: number, a: number): void;
-    setBlocklyLoadDefaultToolbox(loadDefault: boolean): void;
-    setBlocklyCodeGenerationModel(sync: boolean): void;
-    setBlocklyToolbox(toolbox: string): void;
-    addFunction(name: string, func: Function): void;
-    createChart(): Chart;
-    getFunction(name: string): Function;
-    getFunctions(name: string): Array<Function>;
-    sendTiming(category: string, value: string, label: string, time: number): void;
-    actionPerformed(category: string, action: string, label: string): void;
-    actionPerformed(category: string, action: string, label: string, value: number): void;
-    propertySet(name: string, value: string): void;
-    log(message: any): void;
     onPlayModeStarted(initFunction: ((() => void))): void;
+}
+interface __Analytics {
+    sendTiming(options: Analytics.TimingOptions): void;
+    actionPerformed(options: Analytics.ActionOptions): void;
+    propertySet(name: string, value: string): void;
+}
+interface __Application {
+    onModeChanged(handler: (((arg0: Application.ViewMode) => void))): void;
+    startPlayMode(): void;
+    finishPlayMode(): void;
+    finishPlayMode(imageId: string): void;
+    resetScene(): void;
+    viewMode: Application.ViewMode;
+    readonly isMobile: boolean;
+    readonly isTablet: boolean;
+    isViewModeSupported(mode: Application.ViewMode): boolean;
+    readonly locale: string;
+    onSceneExit(onExit: ((() => void))): void;
+}
+interface AR {
+    getMarker(name: string): Marker;
+    isMarkerTracked(name: string): boolean;
+    sceneRotation: number;
+    sceneScale: number;
+    markerBased: boolean;
+    readonly mergeCube: MergeCubeItem;
 }
 interface Assistant {
     listen(provider: string, onUtterance: (((data: Object) => void))): Disposable;
     listen(onUtterance: (((data: Object) => void))): Disposable;
 }
 interface Chart {
+    buttonVisible: boolean;
     showChartButton(show: boolean): void;
     clear(): void;
     addPoint(x: number, y: number): void;
     setLineColor(r: number, g: number, b: number): void;
+    lineColor: Color;
 }
 interface Controller {
     onButtonDown(handler: ((() => void))): void;
@@ -369,34 +435,243 @@ interface Controller {
     onCollisionEnter(handler: (((arg0: BaseItem) => void))): void;
     onCollisionExit(handler: (((arg0: BaseItem) => void))): void;
 }
+interface __Debug {
+    log(s: any): void;
+}
+declare namespace GUI {
+    interface EditorTab {
+        readonly index: number;
+        name: string;
+        visible: boolean;
+        active: boolean;
+        readonly type: GUI.EditorTabType;
+    }
+}
+declare namespace GUI {
+    type EditorTabType = 'script' | 'coblocks' | 'blockly';
+}
+interface __Environment {
+    mood: number;
+    terrain: string;
+    transparentBackground: boolean;
+    skyBox360: string;
+    dataString: string;
+}
+declare namespace GUI {
+    interface __BuildMode {
+        readonly ProgressBar: GUI.__ProgressBar;
+        logoVisible: boolean;
+    }
+}
+declare namespace GUI {
+    interface __Editor {
+        activeTab: GUI.EditorTab;
+        getTab(index: number): GUI.EditorTab;
+        getTab(name: string): GUI.EditorTab;
+        readonly tabs: Array<GUI.EditorTab>;
+        showTabs(): void;
+        showTabs(predicate: (((tab: GUI.EditorTab) => boolean))): void;
+        visible: boolean;
+        buttonVisible: boolean;
+        windowStateButtonVisible: boolean;
+        scriptsVisible: boolean;
+        width: number;
+        dragBarVisible: boolean;
+    }
+}
+declare namespace GUI {
+    interface __HUD {
+        createJoystick(): Joystick;
+        createCameraJoystick(): Joystick;
+        createJoystick(side: Side): Joystick;
+        removeJoystick(): void;
+        removeJoystick(side: Side): void;
+        showInfoPanel(options: {
+            readonly title: string;
+            readonly image?: string;
+            readonly text: string;
+            readonly autoRemove?: boolean;
+            readonly position?: Vector3;
+            readonly onHide?: ((() => void));
+        }): Disposable;
+        sceneNavigationVisible: boolean;
+        ARButtonVisible: boolean;
+        VRButtonVisible: boolean;
+        VRBackButtonVisible: boolean;
+        gyroscopeButtonVisible: boolean;
+    }
+}
+declare namespace GUI {
+    interface __ProgressBar {
+        visible: boolean;
+        interactiveOnPhone: boolean;
+        buttonURL: string;
+        interactive: boolean;
+    }
+}
+interface __GUI {
+    createChart(): Chart;
+    toolbarColor: ColorWithAlpha;
+    readonly HUD: GUI.__HUD;
+    readonly Editor: GUI.__Editor;
+    readonly BuildMode: GUI.__BuildMode;
+    playButtonVisible: boolean;
+    environmentSettingsVisible: boolean;
+    createButton(options: ButtonOptions): GUI.Button;
+    createPanel(options: PanelOptions): GUI.Panel;
+    addView(view: GUI.View): void;
+    removeView(view: GUI.View): void;
+    onResize(handler: (((arg0: Vector2) => void))): void;
+    readonly screenSize: Vector2;
+    createWebPopup(options: {
+        readonly url: string;
+        readonly title: string;
+        readonly confirmLabel?: string;
+        readonly onClose?: ((() => void));
+    }): Disposable;
+    createPopup(options: {
+        readonly titleLabel?: string;
+        readonly titleFontSize?: number;
+        readonly titleFontStyle?: 'regular' | 'medium' | 'demibold' | 'bold' | 'heavy';
+        readonly bodyLabel?: string;
+        readonly bodyFontSize?: number;
+        readonly bodyFontStyle?: 'regular' | 'medium' | 'demibold' | 'bold' | 'heavy';
+        readonly buttonLabel?: string;
+        readonly backgroundColor?: ColorWithAlpha;
+        readonly foregroundColor?: ColorWithAlpha;
+        readonly image?: GUI.Button;
+        readonly type?: 'info' | 'warning' | 'question' | 'confirmation';
+        readonly onContinue?: ((() => void));
+        readonly enableCloseButton?: boolean;
+        readonly onCancel?: (((arg0: boolean) => void));
+    }): GUI.Popup;
+    showPopup(popup: GUI.Popup): void;
+}
 interface __IdeService {
-    showEnvironmentSettings(show: boolean): void;
-    allowEditObjects(show: boolean): void;
-    showObjectLibrary(show: boolean): void;
-    showPlayButton(show: boolean): void;
-    showVRButton(show: boolean): void;
-    showARButton(show: boolean): void;
-    showVRBackButton(show: boolean): void;
-    showGyroscopeButton(show: boolean): void;
-    showScripts(show: boolean): void;
-    setScriptTab(scriptName: string): void;
-    setScriptTabByIndex(scriptIndex: number): void;
-    setToolbarColor(r: number, g: number, b: number, a: number): void;
-    setPermissionEnabled(permissionName: string, enabled: boolean): void;
+}
+interface __Input {
+    onButtonDown(handler: ((() => void))): void;
+    onButtonDown(handler: ((() => void)), buttonString: string): void;
+    onButtonUp(handler: ((() => void))): void;
+    onButtonUp(handler: ((() => void)), buttonString: string): void;
+    onButtonPressed(handler: ((() => void))): void;
+    onButtonPressed(handler: ((() => void)), buttonString: string): void;
+    requestPlayerControl(enabled: boolean): void;
+    customInputEventsConsumed: boolean;
+    readonly clickDirection: Vector3;
+    onExternalCommand(callback: (((command: any, source: Window) => void))): void;
+    getController(): Controller;
+    getController(index: number): Controller;
+    onSensorRotation(handler: (((arg0: __PositionService) => void))): void;
+    mouseInverted: boolean;
+    reticleEnabled: boolean;
+}
+interface __ML {
+    createLearningEnvironment(options: ML.Options): void;
+}
+declare namespace Multiplayer {
+    interface __BuildMode {
+        minPlayers: number;
+        maxPlayers: number;
+        joinInProgressAllowed: boolean;
+        hostChangeInProgressAllowed: boolean;
+        syncEnabled: boolean;
+        numberOfTeams: number;
+    }
+}
+interface __Multiplayer {
+    readonly BuildMode: Multiplayer.__BuildMode;
+    setGameSessionProp(key: string, value: any): void;
+    getGameSessionProp(key: string): string;
+    readonly me: Multiplayer.Player;
+    readonly host: Multiplayer.Player;
+    getPlayer(id: string): Multiplayer.Player;
+    readonly players: Array<Multiplayer.Player>;
+    readonly playersOnCurrentScene: Array<Multiplayer.Player>;
+    getPlayersOnScene(sceneIndex: number): Array<Multiplayer.Player>;
+    warningsEnabled: boolean;
+    onHostStart(func: ((() => void))): void;
+    onRebalance(callback: ((() => void))): void;
+    onConnect(callback: (((arg0: Multiplayer.Player) => void))): void;
+    onDisconnect(callback: (((arg0: Multiplayer.Player) => void))): void;
+    onMessageReceived(callback: (((player: Multiplayer.Player, message: string) => void))): void;
+    onPlayersLoaded(callback: ((() => void))): void;
+    onPlayerSceneEnter(callback: (((arg0: Multiplayer.Player) => void)), sceneIndex: number): void;
+    onPlayerSceneExit(callback: (((arg0: Multiplayer.Player) => void)), sceneIndex: number): void;
+}
+declare namespace Physics {
+    interface __Constraints {
+        createMotorJoint(first: BaseItem, second: BaseItem, v: BaseItem): MotorJointConstraint;
+        createHingeJoint(first: BaseItem, second: BaseItem, v: BaseItem): HingeJointConstraint;
+    }
+}
+interface __Physics {
+    readonly constraints: Physics.__Constraints;
+    addSceneItems(): void;
+    removeSceneItems(): void;
+    createExplosion(origin: Vector3, radius: number, power: number): void;
+    deltaTime: number;
+    gravityPull: number;
+    gravityDirection: Vector3;
+    floorHeight: number;
+    realTime: boolean;
+    paused: boolean;
+    rotationFriction: boolean;
+    sceneRadius: number;
+    solverRelaxationFactor: number;
+    physicsSpeed: number;
+    airArchimedesPrinciple: boolean;
+    setTickRate(tick: number): void;
+    getTickRate(): number;
+}
+declare namespace Renderer {
+    interface __PostProcessing {
+        highlightGlowInnerColor: Color;
+        highlightGlowOuterColor: Color;
+        highlightGlowIntensity: number;
+        highlightGlowWidth: number;
+        bloom: boolean;
+        bloomIntensity: number;
+    }
+}
+interface __RayCast {
+    cast(origin: Vector3, direction: Vector3): RayCast.Result;
+    addToFilter(item: SceneItem): void;
+    removeFromFilter(item: SceneItem): void;
+    shapeCast(item1: BaseItem, direction1: Vector3, item2: BaseItem, direction2: Vector3): number;
+}
+interface __Renderer {
+    readonly PostProcessing: Renderer.__PostProcessing;
+    fadeObjectToCamera: boolean;
+    axes: boolean;
+    boundingBoxes: boolean;
+    collisionCapsules: boolean;
+    collisionPoints: boolean;
+    debugCurves: boolean;
+    joints: boolean;
+    lightItems: boolean;
+    lineLabels: boolean;
+    shadows: boolean;
+    slot: string;
+    softParticles: boolean;
+    softShadows: boolean;
+    boundingBoxesExt: boolean;
 }
 interface __SceneService {
     getItem(id: string): SceneItem;
     getItemSafe(id: string, name: string, errorMessage: string): SceneItem;
     getItemSafeByName(name: string, errorMessage: string): SceneItem;
     createDebugCube(errorMessage: string, name: string, posX: number, posY: number, posZ: number): Cuboid;
-    getSelected(): SceneItem;
     readonly selectedItem: SceneItem;
     getItems(): Array<SceneItem>;
     getItemsWithTag(tag: string): Array<SceneItem>;
     createPerson(gender: string, age: string, posX: number, posY: number): PhongItem;
     createPerson(gender: string, age: string, posX: number, posY: number, slot: string): PhongItem;
     createItem(modelId: string, posX: number, posY: number, posZ: number): BaseItem;
+    createItem(modelId: string, pos: Vector3): BaseItem;
+    createItem(modelId: string, pos: Vector3, slot: string): BaseItem;
     createItem(modelId: string, posX: number, posY: number, posZ: number, slot: string): BaseItem;
+    createSynchronizedItem(modelId: string, posX: number, posY: number, posZ: number, slot: string): BaseItem;
     createCuboid(posX: number, posY: number, posZ: number): Cuboid;
     createEllipsoid(posX: number, posY: number, posZ: number): Ellipsoid;
     createCapsule(posX: number, posY: number, posZ: number): Capsule;
@@ -410,6 +685,7 @@ interface __SceneService {
     getLineItems(): Array<LineItem>;
     createCircleSpline(x: number, y: number, z: number, r: number, flat: boolean): LineItem;
     createEllipseSpline(x: number, y: number, z: number, r0: number, r1: number, n: number, flat: boolean): LineItem;
+    createEllipsePath(x: number, y: number, z: number, r0: number, r1: number, n: number): PathItem;
     createSplineFromArray(x: Array<number>, y: Array<number>, z: Array<number>, ts_type: 'POLYLINE' | 'SPLINE'): LineItem;
     createFunction3D(ts_function: (((t: number) => {
         readonly x: number;
@@ -423,6 +699,7 @@ interface __SceneService {
         readonly z: number;
     })), t0: number, t1: number, div: number): LineItem;
     createLineItem(): LineItem;
+    createLakeItem(): LakeItem;
     createRoadItem(): LineItem;
     createVector(posX: number, posY: number, posZ: number, dirX: number, dirY: number, dirZ: number): ServiceItem;
     createSpline(): LineItem;
@@ -438,7 +715,6 @@ interface __SceneService {
     removeAllPathTails(): void;
     addDashedCircle(basisId: string, red: number, green: number, blue: number, alpha: number, n: number, p: number, rx: number, ry: number): boolean;
     removeAllDashedCircles(): void;
-    getDefaultTailThickness(): number;
     readonly defaultTailThickness: number;
     createInterval(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): LineItem;
     createQuadrantArcPath(x: number, y: number, z: number, r: number, t: number): LineItem;
@@ -450,156 +726,26 @@ interface __SceneService {
     createLinePathWithDefaultOrientation(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, time: number): LineItem;
     createLinePathWithTwoTargets(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, tx0: number, ty0: number, tz0: number, tx1: number, ty1: number, tz1: number, time: number): LineItem;
     createTriangle(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): LineItem;
-    copyItem(item: BaseItem): BaseItem;
-    setMinPlayers(amount: number): void;
-    setMaxPlayers(amount: number): void;
-    enableJoinInProgress(): void;
-    enableHostChangeInProgress(): void;
-    printChatLine(line: string): void;
-    setNumberOfTeams(numberOfTeams: number): void;
-    setAllowedTeamDisbalance(allowedDisbalance: number): void;
-    disableSync(): void;
-    setGameSessionProp(key: string, value: any): void;
-    getGameSessionProp(key: string): string;
-    setAccountProperty(value: string): void;
-    getAccountProperty(): string;
-    getPlayerId(): string;
-    getPlayerData(): {
-        readonly playerId: string;
-        readonly username: string;
-        readonly email: string;
-    };
-    getPlayers(): Array<string>;
-    getPlayersOnCurrentScene(): Array<string>;
-    getPlayersOnScene(sceneIndex: number): Array<string>;
-    onPlayerSceneEnter(callback: (((arg0: string) => void)), sceneIndex: number): void;
-    onPlayerSceneExit(callback: (((arg0: string) => void)), sceneIndex: number): void;
-    onHostStart(func: ((() => void))): void;
-    onRebalance(callback: ((() => void))): void;
-    onConnect(func: (((arg0: {
-        readonly playerId: string;
-        readonly username: string;
-        readonly email: string;
-    }) => void))): void;
-    onDisconnect(func: (((arg0: {
-        readonly playerId: string;
-        readonly username: string;
-        readonly email: string;
-    }) => void))): void;
-    onClientReceived(func: (((id: string, message: string) => void))): void;
-    onHostReceived(func: (((id: string, message: string) => void))): void;
-    sendToClient(client: string, message: string): void;
-    sendToHost(message: string): void;
-    isHost(): boolean;
-    setMultiplayerWarningsEnabled(enabled: boolean): void;
     setProperty(key: string, value: any): void;
     getProperty(key: string): string;
     onPropertyChanged(id: string, handler: (((arg0: string) => void))): void;
-    getCamera(): Camera;
     readonly camera: Camera;
-    schedule(func: ((() => void)), delay: number): Disposable;
-    scheduleRepeating(func: ((() => void)), period: number): Disposable;
-    schedulePhysics(func: ((() => void)), delay: number): Disposable;
-    scheduleRepeatingPhysics(func: ((() => void)), period: number): Disposable;
-    currentTime(): number;
-    currentPhysicsTime(): number;
-    loadLibrary(baseUrl: string, callback: ((() => void))): void;
-    setEnvironmentDataString(env: string): void;
-    environmentDataString: string;
-    getEnvironmentDataString(): string;
-    requestPlayerControl(enabled: boolean): void;
-    onButtonDown(handler: ((() => void))): void;
-    onButtonDown(handler: ((() => void)), buttonString: string): void;
-    onButtonUp(handler: ((() => void))): void;
-    onButtonUp(handler: ((() => void)), buttonString: string): void;
-    onButtonPressed(handler: ((() => void))): void;
-    onButtonPressed(handler: ((() => void)), buttonString: string): void;
-    consumeCustomInputEvents(consume: boolean): void;
-    renderSoftParticles(enabled: boolean): void;
-    renderBloom(enabled: boolean): void;
-    setBloomIntensity(intensity: number): void;
-    setPhysicsSolverRelaxationFactor(relaxationFactor: number): void;
-    renderCollisionPoints(b: boolean): void;
-    renderJoints(b: boolean): void;
-    renderCollisionCapsules(b: boolean): void;
-    explosion(x: number, y: number, z: number, radius: number, power: number): void;
-    pausePhysics(b: boolean): void;
-    setPhysicsDT(dt: number): void;
-    setPhysicsRealTime(b: boolean): void;
-    setPhysicsSpeedFactor(s: number): void;
-    setPhysicsRotationFriction(enabled: boolean): void;
-    setPhysicsGravity(g: number): void;
-    setGravityVector(x: number, y: number, z: number): void;
-    setPhysicsSceneRadius(r: number): void;
-    setPhysicsFloorZ(z: number): void;
-    setAirArchimedesPrinciple(enabled: boolean): void;
-    addItemsToPhysics(): void;
-    removeItemsFromPhysics(): void;
-    onExternalCommand(callback: (((command: any, source: Window) => void))): void;
-    getController(index: number): Controller;
-    onSensorRotation(handler: (((arg0: __PositionService) => void))): void;
-    loadSound(s: string): Sound;
-    loadSound(s: string, callback: (((arg0: Sound) => void))): void;
-    stopSound(soundIds: Array<string>): void;
-    stopSound(soundId: string): void;
-    stopSound(): void;
-    setHighlightGlowInnerColor(red: number, green: number, blue: number): void;
-    setHighlightGlowOuterColor(red: number, green: number, blue: number): void;
-    setHighlightGlowIntensity(intensity: number): void;
-    setHighlightGlowWidth(pixels: number): void;
-    setMood(value: number): void;
-    setTerrain(terrain: string): void;
-    setSkyBox360(imageId: string): void;
-    setSkyBox360(imageId: string, removeTerrain: boolean): void;
-    setTransparentBackground(transparent: boolean): void;
-    renderAxes(b: boolean): void;
-    renderBoundingBoxes(b: boolean): void;
-    renderSlot(b: boolean, slot: string): void;
-    renderLineLabels(b: boolean): void;
-    renderDebugCurves(b: boolean): void;
-    renderShadows(b: boolean): void;
-    renderSoftShadows(b: boolean): void;
-    clear(): void;
+    deleteItems(): void;
+    readonly index: number;
+    readonly name: string;
+}
+interface __Settings {
+    enableFeature(permissionName: string, enabled: boolean): void;
+    objectEditingAllowed: boolean;
+    defaultOrigin: string;
+}
+interface __Sound {
+    load(s: string): Sound;
+    load(s: string, callback: (((arg0: Sound) => void))): void;
+    stopById(soundIds: Array<string>): void;
+    stopById(soundId: string): void;
+    stopAll(): void;
     createSpeechSynthesis(handler: (((arg0: TextToSpeech) => void))): void;
-    getInputDirection(): Vector3;
-    readonly inputDirection: Vector3;
-    traceUnits(x: number, y: number, z: number, dirX: number, dirY: number, dirZ: number): string;
-    addToTraceFilter(item: SceneItem): void;
-    removeFromTraceFilter(item: SceneItem): void;
-    shapeCast(item1: BaseItem, x1: number, y1: number, z1: number, item2: BaseItem, x2: number, y2: number, z2: number): number;
-    setInvertMouse(invertMouse: boolean): void;
-    getLastTracePoint(): Vector3;
-    setFadeObjectToCamera(b: boolean): void;
-    isGyroMode(): boolean;
-    isVRMode(): boolean;
-    isARMode(): boolean;
-    isARModeSupported(): boolean;
-    getARSceneScale(): number;
-    setARSceneScale(scale: number): void;
-    getARSceneRotation(): number;
-    setARSceneRotation(rotation: number): void;
-    getMarkerPosition(name: string): __PositionService;
-    isMarkerTracked(name: string): boolean;
-    getMarker(name: string): Marker;
-    setGyroMode(): void;
-    setVRMode(): void;
-    setARMode(): void;
-    setDefaultMode(): void;
-    onVRModeChanged(handler: (((arg0: boolean) => void))): void;
-    isMobile(): boolean;
-    isTablet(): boolean;
-    setDefaultOrigin(slot: string): void;
-    showWebViewPopup(url: string, title: string): Disposable;
-    showWebViewPopup(url: string, title: string, confirmLabel: string): Disposable;
-    showWebViewPopup(url: string, title: string, confirmLabel: string, onClose: ((() => void))): Disposable;
-    setReticleInput(reticleInput: boolean): void;
-    createJoystick(): Joystick;
-    createCameraJoystick(): Joystick;
-    createJoystick(side: Side): Joystick;
-    removeJoystick(): void;
-    removeJoystick(side: Side): void;
-    onExit(onExit: ((() => void))): void;
-    createLearningEnvironment(stateSpaceSize: number, actionSpaceSize: number, doAction: (((action: Array<number>) => void)), doGetResponse: ((() => Array<number>)), doReset: ((() => Array<number>))): void;
 }
 interface Sound {
     play(): void;
@@ -615,48 +761,107 @@ interface Sound {
     currentPosition(): number;
 }
 interface Space {
-    getPlayers(): Array<string>;
-    onHostStart(func: ((() => void))): void;
-    onConnect(func: (((arg0: {
-        readonly playerId: string;
-        readonly username: string;
-        readonly email: string;
-    }) => void))): void;
-    onDisconnect(func: (((arg0: {
-        readonly playerId: string;
-        readonly username: string;
-        readonly email: string;
-    }) => void))): void;
-    onHostReceived(func: (((id: string, message: string) => void))): void;
-    sendToHost(message: string): void;
-    isHost(): boolean;
-    goTo(sceneId: string): void;
     goToScene(sceneId: string): void;
-    goToSceneIndex(sceneIndex: number): void;
+    goToScene(sceneIndex: number): void;
     goToNextScene(): void;
     goToPreviousScene(): void;
     createScene(name: string): string;
     deleteScene(sceneId: string): void;
-    getSceneIndex(): number;
-    readonly sceneIndex: number;
-    getSceneName(): string;
-    readonly sceneName: string;
-    getLocale(): string;
-    readonly locale: string;
-    finishPlayMode(): void;
-    finishPlayMode(imageId: string): void;
-    startPlayMode(): void;
-    showSceneNavigation(show: boolean): void;
-    log(s: string): void;
     setProperty(key: string, value: string): void;
     getProperty(key: string): string;
     setGlobalProperty(key: string, value: string): void;
-    setPhysicsTickRate(tick: number): void;
-    getPhysicsTickRate(): number;
-    copyPhysicsToModel(): void;
     copyScript(scriptName: string, fromId: string, toId: string): void;
+}
+interface __Time {
+    schedule(func: ((() => void)), delay: number): Disposable;
+    scheduleRepeating(func: ((() => void)), period: number): Disposable;
+    schedulePhysics(func: ((() => void)), delay: number): Disposable;
+    scheduleRepeatingPhysics(func: ((() => void)), period: number): Disposable;
+    readonly currentTime: number;
+    readonly currentPhysicsTime: number;
+}
+interface __Web {
     httpGet(path: string, callback: (((arg0: string) => void))): void;
-    resetCurrentScene(): void;
+    loadLibrary(baseUrl: string, callback: ((() => void))): void;
+}
+declare namespace GUI {
+    interface Button extends GUI.View {
+        setIconId(icon: string): void;
+        setIconId(icon: string, state: 'normal' | 'hovered' | 'selected' | 'pressed' | 'disabled'): void;
+        iconSize: Vector2;
+        blendMode: boolean;
+    }
+}
+declare namespace GUI {
+    interface Panel extends GUI.View {
+        leftButton: GUI.Button;
+        rightButton: GUI.Button;
+        gap: number;
+    }
+}
+declare namespace GUI {
+    interface Popup {
+        type: 'info' | 'warning' | 'question' | 'confirmation';
+        titleLabel: string;
+        titleFontSize: number;
+        titleFontStyle: 'regular' | 'medium' | 'demibold' | 'bold' | 'heavy';
+        bodyLabel: string;
+        bodyFontSize: number;
+        bodyFontStyle: 'regular' | 'medium' | 'demibold' | 'bold' | 'heavy';
+        buttonLabel: string;
+        image: GUI.Button;
+        onContinue: ((() => void));
+        enableCloseButton: boolean;
+        onCancel: (((arg0: boolean) => void));
+        backgroundColor: ColorWithAlpha;
+        foregroundColor: ColorWithAlpha;
+        show(): void;
+        hide(): void;
+    }
+}
+declare namespace GUI {
+    interface View {
+        label: string;
+        fontSize: number;
+        setBackgroundColor(color: ColorWithAlpha): void;
+        setBackgroundColor(color: ColorWithAlpha, state: 'normal' | 'hovered' | 'selected' | 'pressed' | 'disabled'): void;
+        setForegroundColor(color: ColorWithAlpha): void;
+        setForegroundColor(color: ColorWithAlpha, state: 'normal' | 'hovered' | 'selected' | 'pressed' | 'disabled'): void;
+        setBorderColor(color: ColorWithAlpha): void;
+        setBorderColor(color: ColorWithAlpha, state: 'normal' | 'hovered' | 'selected' | 'pressed' | 'disabled'): void;
+        borderWidth: number;
+        cornerRadius: number;
+        position: Vector2;
+        width: number;
+        margin: number;
+        onHover(handler: (((arg0: boolean) => void))): void;
+        onClick(handler: ((() => void))): void;
+        adjustPosition(callback: (((size: Vector2) => Vector2))): void;
+        enabled: boolean;
+        show(): void;
+        hide(): void;
+    }
+}
+declare namespace Analytics {
+    interface ActionOptions {
+        readonly category: string;
+        readonly action: string;
+        readonly label: string;
+        readonly value?: number;
+    }
+}
+declare namespace Analytics {
+    interface TimingOptions {
+        readonly category: string;
+        readonly value: string;
+        readonly label: string;
+        readonly time: number;
+    }
+}
+interface ButtonOptions extends ViewOptions {
+    readonly icon?: string;
+    readonly iconSize?: Vector2;
+    readonly blendMode?: boolean;
 }
 declare namespace CoBlocks {
     namespace Model {
@@ -670,6 +875,58 @@ declare namespace CoBlocks {
             readonly editFunction?: (((ts_function: CoBlocks.Model.FunctionDefinition) => boolean));
         }
     }
+}
+declare namespace ML {
+    interface Options {
+        readonly stateSpaceSize: number;
+        readonly actionSpaceSize: number;
+        readonly action: (((action: Array<number>) => void));
+        readonly getResponse: ((() => Array<number>));
+        readonly reset: ((() => Array<number>));
+    }
+}
+interface PanelOptions extends ViewOptions {
+    readonly leftButton?: GUI.Button;
+    readonly rightButton?: GUI.Button;
+    readonly gap?: number;
+}
+declare namespace RayCast {
+    interface Result {
+        readonly item: BaseItem;
+        readonly distance: number;
+        readonly point: Vector3;
+    }
+}
+declare class Color {
+    readonly red: number;
+    readonly green: number;
+    readonly blue: number;
+    constructor(red: number, green: number, blue: number);
+    constructor(hex: string);
+}
+declare class ColorWithAlpha extends Color {
+    readonly alpha: number;
+    readonly red: number;
+    readonly green: number;
+    readonly blue: number;
+    constructor(red: number, green: number, blue: number, alpha: number);
+    constructor(hex: string);
+}
+interface ViewOptions {
+    readonly label?: string;
+    readonly fontSize?: number;
+    readonly fontStyle?: 'regular' | 'medium' | 'demibold' | 'bold' | 'heavy';
+    readonly backgroundColor?: ColorWithAlpha;
+    readonly foregroundColor?: ColorWithAlpha;
+    readonly borderColor?: ColorWithAlpha;
+    readonly borderWidth?: number;
+    readonly cornerRadius?: number;
+    readonly position?: Vector2;
+    readonly width?: number;
+    readonly margin?: number;
+    readonly onHover?: (((arg0: boolean) => void));
+    readonly onClick?: ((() => void));
+    readonly adjustPosition?: (((size: Vector2) => Vector2));
 }
 interface Disposable {
     dispose(): void;
@@ -695,9 +952,11 @@ declare class Quat {
     static mul(a: Quat, b: Quat): Quat;
     static dot(a: Quat, b: Quat): number;
 }
-interface Vector2 {
+declare class Vector2 {
     x: number;
     y: number;
+    constructor();
+    constructor(x: number, y: number);
 }
 declare class Vector3 {
     x: number;
@@ -726,7 +985,7 @@ declare class Vector3 {
     sub(a: Vector3): Vector3;
     copy(): Vector3;
     toArray(): Array<number>;
-    constructor(_x: number, _y: number, _z: number);
+    constructor(x: number, y: number, z: number);
     static mult(v: Vector3, a: number): Vector3;
     static add(a: Vector3, b: Vector3): Vector3;
     static sub(a: Vector3, b: Vector3): Vector3;
@@ -746,68 +1005,17 @@ declare class Vector3 {
     static div(a: Vector3, s: number): Vector3;
     static triple(a: Vector3, b: Vector3, c: Vector3): number;
 }
-declare namespace CoBlocksInternal {
-    interface Types {
-    }
-    namespace Types {
-        const VOID: Array<string>;
-        const NUMBER: Array<string>;
-        const INT: Array<string>;
-        const LIST: Array<string>;
-        const ANGLE: Array<string>;
-        const COLOR: Array<string>;
-        const DX_GAME_ITEM: Array<string>;
-        const DX_TEXT_ITEM: Array<string>;
-        const DX_BASE_ITEM: Array<string>;
-        const DX_GROUP: Array<string>;
-        const DX_PHYSICS_ITEM: Array<string>;
-        const BOOLEAN: Array<string>;
-        const OBJECT: Array<string>;
-        const STRING: Array<string>;
-        const SCENE: Array<string>;
-        const VEC3: Array<string>;
-        const ANY: Array<string>;
-    }
-}
 declare namespace CoBlocks {
     namespace Model {
-        interface Block {
+        interface Block extends CoBlocks.Model.InputContainer {
             readonly id: string;
-            getInputs(): Array<CoBlocks.Model.Input>;
-            getInput(name: string): CoBlocks.Model.Input;
             copy(): CoBlocks.Model.Block;
-            readonly parent: CoBlocks.Model.Block;
             readonly inputName: string;
             removeFromContainer(): void;
             readonly kind: CoBlocks.Model.BlockKind;
             disabled: boolean;
             readonly actuallyDisabled: boolean;
         }
-    }
-}
-declare namespace CoBlocksInternal {
-    interface BlockIds {
-    }
-    namespace BlockIds {
-        const INT_OUTPUT: string;
-        const ANGLE_OUTPUT: string;
-        const TEXT_OUTPUT: string;
-        const ITEM_OUTPUT: string;
-        const ON_ACTIVATE: string;
-        const COPY: string;
-        const FUNCTIONS: string;
-        const MATH_FRACTION: string;
-        const MATH_ROOT: string;
-        const MATH_SQUARE_ROOT: string;
-        const MATH_CUBE_ROOT: string;
-        const MATH_EXPONENT: string;
-        const MATH_SQUARE: string;
-        const MATH_CUBE: string;
-        const MATH_PLUS: string;
-        const MATH_MINUS: string;
-        const MATH_TIMES: string;
-        const MATH_LOG: string;
-        const IGNORE_EXPRESSION: string;
     }
 }
 declare namespace CoBlocks {
@@ -846,32 +1054,29 @@ declare namespace CoBlocks {
         type TypeKind = 'int' | 'number' | 'string' | 'boolean' | 'dx_item' | 'dx_group' | 'dx_game_item' | 'dx_text_item' | 'list' | 'angle' | 'color' | 'vec3' | 'any';
     }
 }
-declare namespace CoBlocksInternal {
-    interface FieldIds {
-    }
-    namespace FieldIds {
-        const IMAGE_ASSETS: string;
-        const SOUND_ASSETS: string;
-        const SCENE: string;
-        const INT: string;
-        const NUMBER: string;
-        const TEXT: string;
-        const GAME_ITEM: string;
-        const TEXT_ITEM: string;
-        const GROUP: string;
-        const PHYSICS_ITEM: string;
-        const ANGLE: string;
-        const COLOR: string;
-        const BOOLEAN: string;
-        const VEC3: string;
-        const VARIABLE_USAGE: string;
-        const VARIABLE_DEFINITION: string;
-    }
-}
 declare namespace CoBlocks {
     namespace Model {
         interface FieldInput extends CoBlocks.Model.Input {
             text: string;
+        }
+    }
+}
+declare namespace CoBlocks {
+    namespace Model {
+        interface Fragment extends CoBlocks.Model.InputContainer {
+            readonly container: CoBlocks.Model.FragmentInput;
+        }
+    }
+}
+declare namespace CoBlocks {
+    namespace Model {
+        interface FragmentInput extends CoBlocks.Model.Input {
+            addFragment(fragment: CoBlocks.Model.Fragment): void;
+            addFragment(fragment: CoBlocks.Model.Fragment, index: number): void;
+            removeFragment(fragment: CoBlocks.Model.Fragment): void;
+            removeFragment(index: number): void;
+            indexOfFragment(fragment: CoBlocks.Model.Fragment): number;
+            readonly fragments: Array<CoBlocks.Model.Fragment>;
         }
     }
 }
@@ -885,6 +1090,7 @@ declare namespace CoBlocks {
     namespace Model {
         interface FunctionDefinition extends CoBlocks.Model.StatementBlockContainer {
             readonly name: string;
+            readonly returningValue: boolean;
             readonly parameters: Array<CoBlocks.Model.ParameterDefinition>;
             addParameter(parameter: CoBlocks.Model.ParameterDefinition): void;
             delete(): void;
@@ -897,7 +1103,7 @@ declare namespace CoBlocks {
     namespace Model {
         interface Input {
             readonly name: string;
-            readonly parent: CoBlocks.Model.Block;
+            readonly parent: CoBlocks.Model.InputContainer;
             readonly kind: CoBlocks.Model.InputKind;
         }
     }
@@ -913,7 +1119,16 @@ declare namespace CoBlocks {
 }
 declare namespace CoBlocks {
     namespace Model {
-        type InputKind = 'statement' | 'block' | 'field';
+        interface InputContainer {
+            getInputs(): Array<CoBlocks.Model.Input>;
+            getInput(name: string): CoBlocks.Model.Input;
+            readonly parent: CoBlocks.Model.InputContainer;
+        }
+    }
+}
+declare namespace CoBlocks {
+    namespace Model {
+        type InputKind = 'statement' | 'fragments' | 'block' | 'field';
     }
 }
 declare namespace CoBlocks {
@@ -935,7 +1150,7 @@ declare namespace CoBlocks {
 declare namespace CoBlocks {
     namespace Model {
         interface StatementBlockContainer {
-            readonly parent: CoBlocks.Model.StatementLikeBlock;
+            readonly parent: CoBlocks.Model.InputContainer;
             readonly statements: Array<CoBlocks.Model.StatementLikeBlock>;
             addStatement(statement: CoBlocks.Model.StatementLikeBlock): void;
             addStatement(statement: CoBlocks.Model.StatementLikeBlock, index: number): void;
@@ -954,7 +1169,7 @@ declare type StatementBlockContainerKind = 'statement_input' | 'script' | 'funct
 declare namespace CoBlocks {
     namespace Model {
         interface StatementInput extends CoBlocks.Model.Input, CoBlocks.Model.StatementBlockContainer {
-            readonly parent: CoBlocks.Model.StatementLikeBlock;
+            readonly parent: CoBlocks.Model.InputContainer;
         }
     }
 }
@@ -968,22 +1183,22 @@ declare namespace CoBlocks {
         }
     }
 }
-interface AnisotropicItemBase extends FigureItem, ComposableItem {
+interface AnisotropicBaseItem extends AnisotropicPhongItem, ComposableItem {
+}
+interface AnisotropicItem extends AnisotropicBaseItem {
+}
+interface AnisotropicPhongItem extends FigureItem {
     setTexture(id: string, ch: number): void;
     setTextureIds(ids: Array<string>): void;
     setTextureBlend(b: boolean): void;
     setBlendColors(r1: number, g1: number, b1: number, r2: number, g2: number, b2: number): void;
 }
-interface AnisotropicItem extends AnisotropicItemBase {
-}
 interface BaseItem extends SceneItem, __PositionService {
     getColor(): Array<number>;
     setColor(red: number, green: number, blue: number): void;
     setColorFromString(color: string): void;
+    setColor(color: Color): void;
     setHighlightColor(red: number, green: number, blue: number): void;
-    setHighlightIntensity(intensity: number): void;
-    setHighlightFrequency(f: number): void;
-    setHighlightAmplitude(a: number): void;
     addTag(tag: string): void;
     removeTag(tag: string): void;
     hasTag(tag: string): boolean;
@@ -995,7 +1210,6 @@ interface BaseItem extends SceneItem, __PositionService {
     onActivate(handler: ((() => void))): void;
     onHover(handler: (((arg0: boolean) => void))): void;
     showInfoPanel(title: string, image: string, text: string, autoRemove: boolean): Disposable;
-    showInfoPanel(title: string, image: string, text: string, autoRemove: boolean, onHide: ((() => void))): Disposable;
     focusOn(instant: boolean): Disposable;
     focusOff(instant: boolean): void;
     removeFromParent(): void;
@@ -1022,6 +1236,9 @@ interface BaseItem extends SceneItem, __PositionService {
     isAnimated(): boolean;
     readonly animated: boolean;
     setRandomColor(): void;
+    makeSynchronized(): void;
+    requestAuthority(): void;
+    copy(): BaseItem;
     addMoveOnPlaneInteraction(cx: number, cy: number, cz: number, vx: number, vy: number, vz: number, ux: number, uy: number, uz: number): void;
     addMoveOnPlaneInteraction(cx: number, cy: number, cz: number, vx: number, vy: number, vz: number, ux: number, uy: number, uz: number, callback: ((() => void))): void;
     addMoveOnSphereInteraction(): void;
@@ -1061,7 +1278,18 @@ interface BaseItem extends SceneItem, __PositionService {
     moveLinearToBlockly(v: Vector3Blockly, t: number, callback: ((() => void))): void;
     moveLinearLocal(x: number, y: number, z: number, t: number, callback: ((() => void))): void;
     moveAccelerateLocal(x: number, y: number, z: number, v0: number, v1: number, callback: ((() => void))): void;
-    movePath(path: LineItem, t: number, tEnd: number, time: number, repeat: boolean, reverse: boolean, callback: ((() => void))): void;
+    moveOnPath(options: {
+        readonly path: PathItem;
+        readonly reverse?: boolean;
+        readonly startPoint?: number;
+        readonly endPoint?: number;
+        readonly speed?: number;
+        readonly time?: number;
+        readonly turnWithPath?: boolean;
+        readonly repeat?: boolean;
+        readonly callback?: ((() => void));
+    }): void;
+    moveOnPath(path: PathItem, t: number, tEnd: number, time: number, repeat: boolean, reverse: boolean, orientAlongPath: boolean, callback: ((() => void))): void;
     moveBezierPath(path: LineItem, repeat: boolean): void;
     rotateLocalAroundOrigin(dirX: number, dirY: number, dirZ: number, radians: number, time: number): void;
     rotateLocal(dirX: number, dirY: number, dirZ: number, radians: number, time: number): void;
@@ -1080,9 +1308,11 @@ interface BaseItem extends SceneItem, __PositionService {
     setPosition(pos: Vector3): void;
     position: Vector3;
     setPosition(x: number, y: number, z: number, slot: string): void;
+    setPosition(x: number, y: number, z: number, discrete: boolean): void;
     setPositionQuat(x: number, y: number, z: number, qx: number, qy: number, qz: number, qw: number): void;
     setPositionAngle(x: number, y: number, z: number, axisX: number, axisY: number, axisZ: number, angle: number): void;
     setHorizontalDirection(dirX: number, dirY: number): void;
+    setHorizontalDirection(dirX: number, dirY: number, discrete: boolean): void;
     setDirection(dirX: number, dirY: number, dirZ: number): void;
     addRotation(originX: number, originY: number, originZ: number, dirX: number, dirY: number, dirZ: number, radians: number): void;
     addLocalRotationAround(dirX: number, dirY: number, dirZ: number, radians: number): void;
@@ -1090,112 +1320,17 @@ interface BaseItem extends SceneItem, __PositionService {
     addLocalRotation(originX: number, originY: number, originZ: number, dirX: number, dirY: number, dirZ: number, radians: number): void;
     addLocalPosition(dx: number, dy: number, dz: number): void;
     setRelativeToCamera(x: number, y: number, z: number, qx: number, qy: number, qz: number, qw: number): void;
-    shiftPhysicsPosition(x: number, y: number, z: number): void;
-    setPhysicsPosition(x: number, y: number, z: number): void;
-    shiftPhysicsPositionLocal(x: number, y: number, z: number): void;
-    setPhysicsGroupPosition(x: number, y: number, z: number): void;
-    shiftPhysicsGroupPositionLocal(x: number, y: number, z: number): void;
-    getPhysicsPosition(): Vector3;
-    readonly physicsPosition: Vector3;
-    getPhysicsGroupPosition(): Vector3;
-    readonly physicsGroupPosition: Vector3;
-    rotatePhysicsBodyLocal(axisX: number, axisY: number, axisZ: number, angle: number): void;
-    getVelocity(): Vector3;
-    setVelocity(x: number, y: number, z: number): void;
-    getVelocityLocal(): Vector3;
-    velocityLocal: Vector3;
-    setVelocityLocal(x: number, y: number, z: number): void;
-    getGroupVelocityLocal(): Vector3;
-    groupVelocityLocal: Vector3;
-    setGroupVelocityLocal(x: number, y: number, z: number): void;
-    getAngularVelocity(): Vector3;
-    angularVelocity: Vector3;
-    setAngularVelocity(x: number, y: number, z: number): void;
-    getAngularVelocityLocal(): Vector3;
-    angularVelocityLocal: Vector3;
-    setAngularVelocityLocal(x: number, y: number, z: number): void;
-    getGroupAngularVelocityLocal(): Vector3;
-    groupAngularVelocityLocal: Vector3;
-    setGroupAngularVelocityLocal(x: number, y: number, z: number): void;
-    getDensity(): number;
-    density: number;
-    setDensity(density: number): void;
-    setGroupDensity(density: number): void;
-    getMass(): number;
-    mass: number;
-    setMass(m: number): void;
-    getModelMass(): number;
-    modelMass: number;
-    setModelMass(m: number): void;
-    setModelDensity(density: number): void;
-    getGroupMass(): number;
-    groupMass: number;
-    setGroupMass(m: number): void;
-    isStatic(): boolean;
-    setStatic(): void;
-    setStatic(enabled: boolean): void;
-    setModelStatic(enabled: boolean): void;
-    isCCD: boolean;
-    setCCD(enabled: boolean): void;
-    layer: number;
-    setLayer(layer: number): void;
-    setGroupLayer(layer: number): void;
-    setFriction(friction: number): void;
-    setSoftness(s: number): void;
-    setModelFriction(friction: number): void;
-    setGroupFriction(friction: number): void;
-    setRestitution(r: number): void;
-    setModelRestitution(r: number): void;
-    setGroupRestitution(r: number): void;
-    restrictMovementAxis(x: boolean, y: boolean, z: boolean): void;
-    restrictRotationAxis(x: boolean, y: boolean, z: boolean): void;
-    setPhysicsPositionCorrection(x: number, y: number, z: number): void;
-    removePhysicsBody(): void;
-    removePhysicsGroup(): void;
-    removeFromPhysicsGroup(): void;
-    addToPhysics(): void;
-    setModelPreciseCollision(precise: boolean): void;
-    setPreciseCollision(precise: boolean): void;
-    addToPhysicsCollisionFilter(item: BaseItem): void;
-    removeFromPhysicsCollisionFilter(item: BaseItem): void;
-    convertToLocalVector(x: number, y: number, z: number): Vector3;
-    distanceConstraint(item: BaseItem, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, dist: number): DistanceConstraint;
-    attractorConstraint(item: BaseItem, strength: number, maxRad: number): Disposable;
-    positionConstraint(x: number, y: number, z: number): PositionConstraint;
-    rotationConstraint(qx: number, qy: number, qz: number, qw: number): RotationConstraint;
-    jointToItem(other: BaseItem, x: number, y: number, z: number): JointConstraint;
-    hingeJointToItem(other: BaseItem, localAnchorAx: number, localAnchorAy: number, localAnchorAz: number, localAnchorBx: number, localAnchorBy: number, localAnchorBz: number, localAxisAx: number, localAxisAy: number, localAxisAz: number, localAxisBx: number, localAxisBy: number, localAxisBz: number): HingeJointConstraint;
-    motorJointToItem(other: BaseItem, localAnchorAx: number, localAnchorAy: number, localAnchorAz: number, localAnchorBx: number, localAnchorBy: number, localAnchorBz: number, localAxisAx: number, localAxisAy: number, localAxisAz: number, localAxisBx: number, localAxisBy: number, localAxisBz: number): MotorJointConstraint;
-    jointToGround(x: number, y: number, z: number): JointConstraint;
-    planeConstraint(axisX: number, axisY: number, axisZ: number): PlaneConstraint;
-    sliderConstraint(axisX: number, axisY: number, axisZ: number): SliderConstraint;
-    rotationAxisConstraint(axisX: number, axisY: number, axisZ: number): RotationAxisConstraint;
-    gearConstraint(other: BaseItem, localAxisAx: number, localAxisAy: number, localAxisAz: number, localAxisBx: number, localAxisBy: number, localAxisBz: number, gearRatio: number): GearConstraint;
-    curveHandlerConstraint(curveHandler: (((x: number, y: number, z: number) => {
-        readonly x: number;
-        readonly y: number;
-        readonly z: number;
-    })), curveRadius: number, bodyRadius: number): CurveConstraint;
-    curveConstraint(curve: LineItem, curveRadius: number, bodyRadius: number): CurveConstraint;
-    removeFromConstraints(): void;
-    applyImpulse(x: number, y: number, z: number, impX: number, impY: number, impZ: number): void;
-    applyImpulseLocal(x: number, y: number, z: number, impX: number, impY: number, impZ: number): void;
-    applyForce(x: number, y: number, z: number): void;
-    setForce(x: number, y: number, z: number): void;
-    setGroupForce(x: number, y: number, z: number): void;
-    onPhysicsCollisionEnter(handler: (((arg0: BaseItem) => void))): Disposable;
-    onPhysicsCollisionExit(handler: (((arg0: BaseItem) => void))): Disposable;
-    onPhysicsCollision(handlerEnter: (((arg0: BaseItem) => void)), handlerExit: (((arg0: BaseItem) => void))): Disposable;
-    clearCollisionHandlers(): void;
-    isInGroup(): boolean;
-    readonly inGroup: boolean;
-    enableMultiplayerPhysics(): void;
-    setMpVelocity(x: number, y: number, z: number): void;
-    restrictMpRotation(x: boolean, y: boolean, z: boolean): void;
-    setMpPhysicsPosition(x: number, y: number, z: number): void;
     setVisible(visible: boolean): void;
+    visible: boolean;
     setHighlighted(highlighted: boolean): void;
+    setHighlighted(headlight: boolean, glow: boolean): void;
     isHighlighted(): boolean;
+    isHighlightedWithHeadlight(): boolean;
+    isHighlightedWithGlow(): boolean;
+    setHighlightIntensity(intensity: number): void;
+    setHighlightAmbient(ambient: number): void;
+    setHighlightFrequency(frequency: number): void;
+    setHighlightAmplitude(amplitude: number): void;
     getParent(): BaseItem;
     readonly parent: BaseItem;
     setShadowPower(value: number): void;
@@ -1206,11 +1341,119 @@ interface BaseItem extends SceneItem, __PositionService {
     stop(): void;
     getPart(key: string): BaseItem;
     setPartName(name: string): void;
+    readonly physics: {
+        shiftPosition(shift: Vector3): void;
+        position: Vector3;
+        shiftPositionLocal(v: Vector3): void;
+        rotateLocal(axis: Vector3, angle: number): void;
+        velocity: Vector3;
+        velocityLocal: Vector3;
+        angularVelocity: Vector3;
+        angularVelocityLocal: Vector3;
+        density: number;
+        mass: number;
+        modelMass: number;
+        modelDensity: number;
+        isStatic: boolean;
+        isModelStatic: boolean;
+        isCCD: boolean;
+        layer: number;
+        friction: number;
+        softness: number;
+        modelFriction: number;
+        restitution: number;
+        modelRestitution: number;
+        restrictMovementAxis(axes: {
+            readonly x?: boolean;
+            readonly y?: boolean;
+            readonly z?: boolean;
+        }): void;
+        restrictRotationAxis(axes: {
+            readonly x?: boolean;
+            readonly y?: boolean;
+            readonly z?: boolean;
+        }): void;
+        positionCorrection: Vector3;
+        enabled: boolean;
+        removeGroup(): void;
+        removeFromGroup(): void;
+        modelPreciseCollision: boolean;
+        preciseCollision: boolean;
+        addToCollisionFilter(item: BaseItem): void;
+        removeFromCollisionFilter(item: BaseItem): void;
+        convertToLocalVector(v: Vector3): Vector3;
+        distanceConstraint(options: {
+            readonly other: BaseItem;
+            readonly thisAnchor?: Vector3;
+            readonly otherAnchor?: Vector3;
+            readonly distance: number;
+        }): DistanceConstraint;
+        attractorConstraint(options: {
+            readonly other: BaseItem;
+            readonly strength: number;
+            readonly maxRadius: number;
+        }): Disposable;
+        positionConstraint(position: Vector3): PositionConstraint;
+        rotationConstraint(quat: Quat): RotationConstraint;
+        jointTo(other: BaseItem, anchor: Vector3): JointConstraint;
+        hingeJointTo(options: {
+            readonly other: BaseItem;
+            readonly thisLocalAnchor?: Vector3;
+            readonly otherLocalAnchor?: Vector3;
+            readonly thisLocalAxis?: Vector3;
+            readonly otherLocalAxis?: Vector3;
+        }): HingeJointConstraint;
+        motorJointTo(options: {
+            readonly other: BaseItem;
+            readonly thisLocalAnchor?: Vector3;
+            readonly otherLocalAnchor?: Vector3;
+            readonly thisLocalAxis?: Vector3;
+            readonly otherLocalAxis?: Vector3;
+        }): MotorJointConstraint;
+        jointToGround(anchor: Vector3): JointConstraint;
+        planeConstraint(axis: Vector3): PlaneConstraint;
+        sliderConstraint(axis: Vector3): SliderConstraint;
+        rotationAxisConstraint(axis: Vector3): RotationAxisConstraint;
+        gearConstraint(options: {
+            readonly other: BaseItem;
+            readonly thisLocalAxis?: Vector3;
+            readonly otherLocalAxis?: Vector3;
+            readonly ratio?: number;
+        }): GearConstraint;
+        curveHandlerConstraint(curveHandler: (((x: number, y: number, z: number) => {
+            readonly x: number;
+            readonly y: number;
+            readonly z: number;
+        })), curveRadius: number, bodyRadius: number): CurveConstraint;
+        curveConstraint(curve: LineItem, curveRadius: number, bodyRadius: number): CurveConstraint;
+        removeFromConstraints(): void;
+        applyImpulse(anchor: Vector3, impulse: Vector3): void;
+        applyImpulseLocal(anchor: Vector3, impulse: Vector3): void;
+        applyForce(force: Vector3): void;
+        setForce(force: Vector3): void;
+        setGroupForce(force: Vector3): void;
+        onCollisionEnter(handler: (((arg0: BaseItem) => void))): Disposable;
+        onCollisionExit(handler: (((arg0: BaseItem) => void))): Disposable;
+        onCollision(handlerEnter: (((arg0: BaseItem) => void)), handlerExit: (((arg0: BaseItem) => void))): Disposable;
+        clearCollisionHandlers(): void;
+        readonly isInGroup: boolean;
+        readonly group: {
+            position: Vector3;
+            shiftPositionLocal(v: Vector3): void;
+            velocityLocal: Vector3;
+            angularVelocityLocal: Vector3;
+            density: number;
+            mass: number;
+            layer: number;
+            setFriction(friction: number): void;
+            setRestitution(r: number): void;
+        };
+    };
 }
 interface BasisItem extends ServiceItem {
 }
 interface CameraItem extends AnimatedItem {
-    setMovement(movementType: string): void;
+    movement: 'fly' | 'walk' | 'fixed_position' | 'fixed' | 'orbit';
     create360Photo(): void;
 }
 interface Capsule extends AnisotropicItem {
@@ -1254,10 +1497,14 @@ interface Cylinder extends AnisotropicItem {
     radiusY(): number;
     height(): number;
 }
+interface DirLightItem extends LightItem {
+    shadowMapWidth: number;
+}
 interface SceneItem {
     name(): string;
     setName(name: string): void;
     id(): string;
+    isLocal(): boolean;
     deleteFromScene(): void;
     setProperty(key: string, value: any): void;
     getProperty(key: string): string;
@@ -1287,21 +1534,24 @@ interface FigureItem extends UnitItem {
     removeFromInverseMask(): void;
 }
 interface Cuboid extends AnisotropicItem {
-    setSize(length: number, width: number, height: number): void;
     setLength(length: number): void;
     setWidth(width: number): void;
     setHeight(height: number): void;
-    length(): number;
-    width(): number;
-    height(): number;
     setText(text: any): void;
     text(): string;
     setTextColor(red: number, green: number, blue: number): void;
     setFontSize(value: number): void;
+    length(): number;
+    width(): number;
+    height(): number;
+    setSize(sx: number, sy: number, sz: number): void;
+}
+interface FlexWallItem extends VerticesItem {
 }
 interface FractalItem extends GameItem {
     setGrowth(growth: number): void;
     setOrder(order: number): void;
+    setTextureType(ts_type: number): void;
     setType(ts_type: number): void;
     setSeed(seed: number): void;
     setColorType(colorType: number): void;
@@ -1317,7 +1567,7 @@ interface Frustum4Item extends AnisotropicItem {
     topLength(): number;
     topWidth(): number;
 }
-interface Frustum extends AnisotropicItemBase {
+interface Frustum extends AnisotropicBaseItem {
     setSize(bottomRadiusX: number, topRadiusX: number, ratio: number, height: number): void;
     bottomRadiusX(): number;
     bottomRadiusY(): number;
@@ -1341,6 +1591,20 @@ interface HelicopterItem extends PhongItem {
     stopHelicopter(): void;
 }
 interface HemiEllipsoid extends EllipsoidItemBase {
+}
+interface LakeItem extends LineItem {
+    setShoreColor(red: number, green: number, blue: number): void;
+}
+interface LightItem extends ServiceItem {
+    intensity: number;
+    shadowStrength: number;
+    shadow: boolean;
+    shadowType: 'TAP_1' | 'PCF_2x2' | 'PCF_4x4' | 'PCF_6x6';
+    readonly shadowResolution: number;
+    addToLightReceiveFilter(item: BaseItem): boolean;
+    removeFromLightReceiveFilter(item: BaseItem): boolean;
+    addToShadowCastFilter(item: BaseItem): void;
+    removeFromShadowCastFilter(item: BaseItem): void;
 }
 interface LineItem extends SceneItem {
     setTimesAndQuatsEvenly(time: number): void;
@@ -1367,20 +1631,19 @@ interface LineItem extends SceneItem {
     setColor(red: number, green: number, blue: number): void;
     attachToItem(obj: BaseItem): void;
     makeCircle(): void;
+    thickness: number;
     addVertex(item: VectorItem): void;
     getVertex(index: number): VectorItem;
     setHeight(height: number): void;
     setTimesEvenly(time: number): void;
     setTimesUniformAcceleration(time: number): void;
     isSpline(): boolean;
-    isVisible(): boolean;
+    visible: boolean;
     isDotted(): boolean;
     setType(ts_type: number): void;
-    setVisible(b: boolean): void;
     setSpline(b: boolean): void;
     setSplineInterval(index: number, b: boolean): void;
     setDotted(b: boolean): void;
-    setThickness(thickness: number): void;
     setDimension(index: number, value: number): void;
     addRotation(dirX: number, dirY: number, dirZ: number, radians: number): void;
     log(): void;
@@ -1389,8 +1652,10 @@ interface MengerSponge4Item extends GameItem {
     setLevel(level: number): void;
     getLevel(): number;
 }
-interface MergeCubeItem extends PhongItem {
+interface MergeCubeItem extends AnisotropicBaseItem {
     setInsideVisible(inside: boolean): void;
+    readonly visibleSide: AR.MergeCubeSide;
+    onRotationGesture(handler: ((() => void)), direction: AR.RotationDirection): void;
 }
 interface ParticleItem extends BaseItem {
     setEmitRate(rate: number): void;
@@ -1403,9 +1668,19 @@ interface ParticleItem extends BaseItem {
     setSize2(s2: number): void;
     setFireRadius(r: number): void;
 }
-interface PathItem extends LineItem {
+interface PathItem extends VerticesItem {
+    setSpline(b: boolean): void;
+    setThickness(thickness: number): void;
+    getNearestPoint(other: BaseItem): number;
 }
 interface PhongItem extends AnimatedItem {
+    setAlphaTest(enabled: boolean): void;
+}
+interface PlanetItem extends PhongItem {
+    setToSunDir(x: number, y: number, z: number): void;
+    setToSunDir(dir: Vector3): void;
+}
+interface PointLightItem extends LightItem {
 }
 interface RoadItem extends TexturedLine {
     setStandardMarkUp(lineIndex: number, lines: number, dotted: boolean, adjust: number, thick: number, dimX: number, dimY: number, dimZ: number, r: number, g: number, b: number): void;
@@ -1438,6 +1713,7 @@ interface AnimatedItem extends FigureItem {
     setAnimationStateNT(state: string, trackTime: number): void;
     stopAnimation(): void;
     setAnimationSpeed(speed: number): void;
+    animationSpeed: number;
     onAnimationTime(time: number, callback: ((() => void))): void;
     onAnimationNT(time: number, callback: ((() => void))): void;
     isAnimationPlaying(): boolean;
@@ -1462,6 +1738,11 @@ interface AnimatedItem extends FigureItem {
     readonly defaultVisibleParts: Array<string>;
     getAllParts(): Array<string>;
     readonly allParts: Array<string>;
+}
+interface SpotLightItem extends LightItem {
+    fov: number;
+}
+interface StairsItem extends VerticesItem {
 }
 interface TexturedLine extends LineItem {
 }
@@ -1508,6 +1789,9 @@ interface UnitItem extends GameItem {
 }
 interface VectorItem extends ServiceItem {
     orient(dirX: number, dirY: number, dirZ: number): void;
+}
+interface VerticesItem extends AnisotropicPhongItem {
+    getVertex(index: number): VectorItem;
 }
 interface ComposableItem {
     union(other: ComposableItem): CsgItem;

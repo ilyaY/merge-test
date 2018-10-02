@@ -1,0 +1,2 @@
+export {}
+Debug.log("YATSYSHIN");

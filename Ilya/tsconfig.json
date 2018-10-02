@@ -10,6 +10,7 @@
     "experimentalDecorators": true,
     "downlevelIteration": true,
     "noEmitOnError": false,
+    "removeComments": true,
     "typeRoots": [
       "./dx"
     ]
